@@ -68,25 +68,28 @@ The core patterns are **platform-agnostic**. `.claude/` is the reference impleme
 ### Claude Code（主平台 / Primary）
 
 ```bash
-# 1. Clone to your project
-git clone https://github.com/lennney/controller-harness.git harness-temp
+# 1. Clone the repo
+git clone https://github.com/lennney/controller-harness.git
+cd controller-harness
 
-# 2. Copy the .claude directory
-cp -r harness-temp/.claude your-project/
-cp harness-temp/templates/claude.md your-project/.claude/CLAUDE.md
+# 2. Install to your project
+./install.sh /path/to/your-project
 
-# 3. Clean up
-rm -rf harness-temp
-
-# 4. Start coding — the harness activates automatically
+# 3. Start coding — harness activates automatically
 ```
 
-Or add as a git submodule:
+Or install globally:
+
+```bash
+./install.sh --global
+```
+
+Or use as a git submodule (auto-update):
 
 ```bash
 cd your-project
-git submodule add https://github.com/lennney/controller-harness.git .claude/harness
-cp .claude/harness/templates/claude.md .claude/CLAUDE.md
+git submodule add https://github.com/lennney/controller-harness.git .claude/skills/controller-harness
+.claude/skills/controller-harness/install.sh .
 ```
 
 ### OpenAI Codex
@@ -194,48 +197,47 @@ Skills are reusable patterns in `.claude/skills/`. After each complex task, the 
 | `pm-requirements` | PM-style requirements template |
 | `state-persistence` | JSON state, clean-state discipline |
 | `auto-codify` | Autonomous skill creation from experience |
-| `harness-system` | System overview and architecture reference |
 
 ---
 
 ## 文件结构 / File Structure
 
 ```
-controller-harness/
-├── README.md                       # 本文件 / This file
-├── CHANGELOG.md                    # 版本历史
+controller-harness/                 # This repo = a skill package
+├── SKILL.md                        # Main skill entry (system overview)
+├── install.sh                      # One-command installer
+├── README.md                       # This file
+├── CHANGELOG.md                    # Version history
 ├── LICENSE                         # MIT
-├── .claude/                        # Claude Code 参考实现 / Reference implementation
-│   ├── CLAUDE.md                   # 项目引导文件 / Bootstrap
-│   ├── settings.json               # Hooks (SessionStart, PostToolUse, SubagentStop)
-│   ├── skills/                     # 10 个可复用技能
-│   │   ├── session-start/SKILL.md
-│   │   ├── initializer/SKILL.md
-│   │   ├── phase-loop/SKILL.md
-│   │   ├── fix-phase/SKILL.md
-│   │   ├── delegate-code/SKILL.md
-│   │   ├── triage-router/SKILL.md
-│   │   ├── pm-requirements/SKILL.md
-│   │   ├── state-persistence/SKILL.md
-│   │   ├── auto-codify/SKILL.md
-│   │   └── harness-system/SKILL.md
-│   └── agents/                     # 5 个角色型子代理
-│       ├── backend-engineer.md
-│       ├── code-reviewer.md
-│       ├── requirements-analyst.md
-│       ├── project-director.md
-│       └── experience-consolidator.md
-├── platforms/                      # 跨平台适配器 / Cross-platform adapters
+├── skills/                         # 9 installable skills → user's .claude/skills/
+│   ├── session-start/SKILL.md
+│   ├── initializer/SKILL.md
+│   ├── phase-loop/SKILL.md
+│   ├── fix-phase/SKILL.md
+│   ├── delegate-code/SKILL.md
+│   ├── triage-router/SKILL.md
+│   ├── pm-requirements/SKILL.md
+│   ├── state-persistence/SKILL.md
+│   └── auto-codify/SKILL.md
+├── agents/                         # 5 subagent definitions → user's .claude/agents/
+│   ├── backend-engineer.md
+│   ├── code-reviewer.md
+│   ├── requirements-analyst.md
+│   ├── project-director.md
+│   └── experience-consolidator.md
+├── hooks/
+│   └── settings.json               # Hooks snippet (merge into user's settings)
+├── platforms/                      # Cross-platform adapters
 │   ├── codex/
 │   ├── cursor/
 │   ├── windsurf/
 │   ├── copilot/
 │   └── generic/
-├── templates/                      # 项目模板 / Project templates
-│   └── claude.md                   # 下游项目 CLAUDE.md 模板
-└── docs/                           # 详细参考文档 / Detailed references
-    ├── PHASE_LOOP.md               # 7 步工作流详解
-    └── CONTROLLER_HARNESS_PRACTICE.md  # 实践指南
+├── templates/
+│   └── claude.md                   # Downstream CLAUDE.md template
+└── docs/                           # Detailed reference docs
+    ├── PHASE_LOOP.md
+    └── CONTROLLER_HARNESS_PRACTICE.md
 ```
 
 ---

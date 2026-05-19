@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **4-Pattern Architecture**: Orchestrator-Workers (Anthropic), Evaluator-Optimizer (Anthropic), Triage Router (OpenAI), Closed Learning Loop (Hermes Agent)
-- **10 native Claude Code skills** in `.claude/skills/` with YAML frontmatter: session-start, initializer, phase-loop, fix-phase, delegate-code, triage-router, pm-requirements, state-persistence, auto-codify, harness-system
+- **9 installable skills** in `skills/` with YAML frontmatter: session-start, initializer, phase-loop, fix-phase, delegate-code, triage-router, pm-requirements, state-persistence, auto-codify
 - **5 role-based subagent definitions** in `.claude/agents/`: backend-engineer, code-reviewer, requirements-analyst, project-director, experience-consolidator
 - **Claude Code hooks** in `.claude/settings.json`: SessionStart state check, PostToolUse linting, SubagentStop validation
 - **Closed Learning Loop** (Hermes-inspired): `/auto-codify` skill auto-detects patterns and creates/refines skills after complex tasks
