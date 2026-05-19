@@ -2,66 +2,61 @@
 
 ## Controller Harness System
 
-This project uses a **Controller Harness** — an AI orchestration system for managing development phases. When Claude Code starts, it can operate in two modes:
+This project uses a **Controller Harness** — an AI orchestration system based on Anthropic's [Effective Harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) and [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) patterns.
 
 ### Mode 1: Direct Development (Default)
 Standard code changes, tests, and documentation.
 
 ### Mode 2: Controller Mode (Long-running phases)
-For complex multi-step features. Follows `docs/harness/PHASE_LOOP.md` Controller rules.
-
-**How to enter Controller Mode:**
-- Human requests a phase implementation from `tasks.md`
-- Human says "start phase N" or "run controller harness"
+For complex multi-step features. Enter by saying "start phase N" or "run controller harness."
 
 **Controller Mode reads these files (in order):**
-1. `AGENTS.md` — Core rules
-2. `docs/harness/PHASE_LOOP.md` — 7-step phase execution workflow
-3. `docs/harness/PROJECT_CONTEXT.md` — Current phase and state
-4. `docs/harness/skills/` — Reusable patterns and error fixes
+1. `docs/harness/PROJECT_CONTEXT.json` — Current phase and state (JSON format)
+2. `docs/harness/features.json` — Feature list with verified `passes` boolean
+3. `docs/harness/PHASE_LOOP.md` — 7-step workflow definition
+4. `.claude/skills/` — Reusable skill entries
 
 **Controller Mode rules:**
-- Never implement code directly — always delegate to subagent
-- Use subagent types: `backend-engineer` (code), `code-reviewer` (review)
+- Never implement code directly — always delegate [CODE]/[TEST] to `backend-engineer` subagent
+- Use task type markers: [CODE]/[DOC]/[DATA]/[TEST]/[AUTO]; unmarked = assume [CODE]
 - Commit after: subagent success + module tests green
-- Escalate immediately: quality gate fails, coverage drops, 3 retries exhausted
+- Max 3 retries per phase, Fix Phase (Evaluator-Optimizer) before retry
+- **Session start**: run `/session-start` ritual — read state, check git log, run tests
+- **Session end**: clean-state discipline — commit, update PROJECT_CONTEXT.json, leave mergeable
 
 **Quick reference for Controller Mode:**
 ```
-Phase execution: docs/harness/PHASE_LOOP.md
-Current state: docs/harness/PROJECT_CONTEXT.md
-Error patterns: docs/harness/skills/
-Fix procedures: reports/harness/repair_playbook.md
-Handoff outputs: subagent_results/
+Skills:         /session-start  /phase-loop  /fix-phase  /pm-requirements
+                /delegate-code  /triage-router  /initializer  /state-persistence
+Subagents:      backend-engineer  code-reviewer  requirements-analyst
+                project-director  experience-consolidator
+State file:     docs/harness/PROJECT_CONTEXT.json
+Error log:      reports/harness/error_memory.jsonl
+Phase output:   subagent_results/
 ```
-
----
 
 ## 7-Step Phase Loop
 
-| Step | Name | Role | What it does |
-|------|------|------|--------------|
-| 1 | PLANNER | project-director subagent | Create step-by-step plan with acceptance criteria |
-| 2 | REQUIREMENTS | general-purpose subagent | Convert plan to requirements with field definitions |
-| 3 | IMPLEMENTATION | backend-engineer subagent | Execute (never Controller for [CODE]) |
-| 4 | REVIEW | code-reviewer subagent | Verify against requirements |
-| 5 | DOC REVIEW | Controller | Verify documentation accuracy |
-| 6 | EXPERIENCE | general-purpose subagent | Extract learnings, codify patterns |
-| 7 | COORDINATION | Controller | Commit+push OR Fix Phase OR escalate |
+| Step | Name | Subagent/Executor |
+|------|------|-------------------|
+| 1 | PLANNER | project-director subagent |
+| 2 | REQUIREMENTS | requirements-analyst subagent |
+| 3 | IMPLEMENTATION | backend-engineer subagent (NEVER Controller for [CODE]) |
+| 4 | REVIEW | code-reviewer subagent |
+| 5 | DOC REVIEW | Controller |
+| 6 | EXPERIENCE | experience-consolidator subagent (Haiku) |
+| 7 | COORDINATION | Controller — commit or enter Fix Phase |
 
-**Fix Phase** (on failure): F1-Issue → F2-Root Cause → F3-Skill Codify → F4-Fix Plan → F5-Retry
-**Max retries**: 3 per phase, then escalate.
+**Fix Phase** (Evaluator-Optimizer): F1-Issue → F2-Root Cause → F3-Codify → F4-Plan → F5-Retry (max 3)
 
-## Task Type Markers
+## Task Type Markers (Triage Routing)
 
-All tasks in tasks.md MUST have a type marker:
+| Marker | Executed By |
+|--------|-------------|
+| [CODE] | backend-engineer subagent |
+| [DOC] | Controller (self) |
+| [DATA] | Dispatch as needed |
+| [TEST] | backend-engineer subagent |
+| [AUTO] | Controller (self) |
 
-| Marker | Meaning | Who Executes |
-|--------|---------|--------------|
-| [CODE] | Code implementation | backend-engineer subagent |
-| [DOC] | Documentation-only | Controller (self) |
-| [DATA] | Data files | subagent or Controller |
-| [TEST] | Adding/updating tests | backend-engineer subagent |
-| [AUTO] | Automated verification | Controller (self) |
-
-Unmarked = assume [CODE] (delegate).
+Unmarked = assume [CODE] (safer: always delegate).

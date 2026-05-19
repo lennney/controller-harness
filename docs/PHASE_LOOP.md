@@ -1,5 +1,7 @@
 # Controller Phase Loop
 
+> **v2 Note**: This is a v1 reference document. For the canonical v2 workflow, see `.claude/skills/phase-loop/SKILL.md` and `.claude/skills/harness-system/SKILL.md`. Some paths and names referenced here may be outdated.
+
 ## Purpose
 
 Defines the 7-step workflow for executing one phase (a logical unit of work from tasks.md).

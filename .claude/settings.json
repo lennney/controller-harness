@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f docs/harness/PROJECT_CONTEXT.json ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"Controller Harness active. Read docs/harness/PROJECT_CONTEXT.json for current phase state. Read docs/harness/PHASE_LOOP.md for 7-step workflow.\"}}'; fi",
+            "shell": "bash"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import sys,json; print(json.load(sys.stdin).get('file_path',''))\" 2>/dev/null); [ -n \"$file\" ] && [ \"${file##*.}\" = \"py\" ] && (ruff check \"$file\" --quiet 2>/dev/null || true); exit 0",
+            "shell": "bash"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "backend-engineer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SubagentStop\",\"additionalContext\":\"Backend-engineer subagent finished. Verify subagent_results/ output exists and review before committing.\"}}'",
+            "shell": "bash"
+          }
+        ]
+      }
+    ]
+  }
+}

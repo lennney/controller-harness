@@ -1,5 +1,7 @@
 # Controller Harness 践行方案
 
+> **v2 说明**: 这是 v1 参考文档。v2 规范版本见 `.claude/skills/harness-system/SKILL.md` 和 `.claude/skills/phase-loop/SKILL.md`。文中部分路径和名称可能已过时。
+
 *适用场景：你（主控）直接在 Claude Code 主窗口运行，Claude Code 作为 Controller Agent*
 
 ---

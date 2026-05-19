@@ -1,51 +1,37 @@
-# Controller Harness - Bootstrap Entry
+# Controller Harness - Bootstrap v2
 
-## Project Overview
+> Based on Anthropic's [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents) patterns and [Effective Harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) research.
+> Skills: `/session-start` `/phase-loop` `/fix-phase` `/pm-requirements` `/delegate-code` `/triage-router` `/harness-system` `/initializer` `/state-persistence` `/auto-codify`
+> Subagents: `backend-engineer` `code-reviewer` `requirements-analyst` `project-director` `experience-consolidator`
 
-Controller Harness is a reusable AI orchestration system that provides a 7-step phase execution workflow with subagent delegation and skill codification.
+## Architecture
 
-## Quick Start
+Controller Harness uses two of Anthropic's five workflow patterns:
 
-1. Run `./scripts/install.sh --global` to install globally
-2. See `docs/PHASE_LOOP.md` for the core workflow
-3. See `skills/TEMPLATE.md` to create skill entries
+| Pattern | How We Use It |
+|---------|--------------|
+| **Orchestrator-Workers** | Controller decomposes tasks, delegates to subagents, synthesizes results |
+| **Evaluator-Optimizer** | Review (evaluator) → Fix Phase (optimizer) → retry loop |
 
-## Key Concepts
+Plus OpenAI's **Triage** pattern for routing tasks by type marker.
 
-### 7-Step Phase Loop
+## Session Boundaries
 
-| Step | Name | Role |
-|------|------|------|
-| 1 | PLANNER | Create step-by-step plan |
-| 2 | REQUIREMENTS | Convert to specific requirements |
-| 3 | IMPLEMENTATION | Execute (delegate to subagent for [CODE]) |
-| 4 | REVIEW | Verify against requirements |
-| 5 | DOC REVIEW | Verify documentation |
-| 6 | EXPERIENCE | Extract learnings, codify skills |
-| 7 | COORDINATION | Commit+push or Fix Phase |
+### Every Session Start → run `/session-start`
+Recovers state after context reset: read PROJECT_CONTEXT.json → check git log → run tests → identify next task.
 
-### Task Type Markers
+### Every Session End → clean-state discipline
+Commit with descriptive message, update PROJECT_CONTEXT.json, leave code mergeable.
 
-All tasks MUST have a type marker:
-- [CODE] - Code implementation (delegate to subagent)
-- [DOC] - Documentation-only (Controller executes)
-- [DATA] - Data files
-- [TEST] - Adding/updating tests
-- [AUTO] - Automated verification
+### State Files → JSON always
+Anthropic found JSON resists agent corruption better than Markdown.
+- `docs/harness/PROJECT_CONTEXT.json` — phase state, last session, next tasks
+- `docs/harness/features.json` — feature list with `passes` boolean (agents only flip false→true after verified testing)
+- `reports/harness/error_memory.jsonl` — append-only error log
 
-### Fix Phase (on failure)
+## Core Rules
 
-F1: Issue Documentation -> F2: Root Cause Analysis -> F3: Skill Codification -> F4: Fix Plan -> F5: Retry Decision
-
-Max 3 retries per phase before escalation.
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| docs/PHASE_LOOP.md | 7-step workflow definition |
-| docs/PROJECT_CONTEXT.md | State tracking template |
-| docs/CONTROLLER_HARNESS_PRACTICE.md | Core principles |
-| skills/TEMPLATE.md | Skill entry template |
-| skills/*.md | Reusable skill entries |
-| templates/claude.md | Bootstrap CLAUDE.md template |
+- **NEVER implement code directly** — delegate [CODE]/[TEST]/Unmarked to `backend-engineer`
+- Max 3 retries per phase, Fix Phase (Evaluator-Optimizer) before each retry
+- Commit only after: all steps pass + tests green
+- Project initialization: use `/initializer` to scaffold new projects
